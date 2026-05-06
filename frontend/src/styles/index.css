@@ -1,0 +1,153 @@
+/* ================= GOOGLE FONTS ================= */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+/* ================= VARIABLES ================= */
+:root {
+  --bg: #0f1117;
+  --bg-card: #1a1d27;
+  --bg-input: #13161f;
+  --border: #2a2d3d;
+  --border-focus: #6366f1;
+  --text: #e8eaf0;
+  --text-muted: #8b8fa8;
+  --text-subtle: #5c6080;
+  --primary: #6366f1;
+  --primary-hover: #5558e3;
+  --primary-light: #6366f115;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --danger-light: #ef444415;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* ================= RESET ================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ================= BUTTON ================= */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.btn:hover { transform: translateY(-1px); }
+/* 
+/* CARD */
+
+
+/* PRIORITY CHIP */
+.priority-chip {
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 10px;
+}
+
+/* OVERDUE */
+.overdue-badge {
+  background: rgba(239,68,68,0.2);
+  color: #ef4444;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+/* FOOTER */
+.task-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* DELETE BUTTON */
+.btn-delete-task {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* SELECT */
+.status-select {
+  background: #1f2028;
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+/* ================= PRIORITY ================= */
+.task-card.priority-high { border-left-color: var(--danger); }
+.task-card.priority-medium { border-left-color: var(--warning); }
+.task-card.priority-low { border-left-color: var(--success); }
+
+/* ================= STATUS ================= */
+.status-select.status-todo { color: var(--text-muted); }
+.status-select.status-in_progress { color: #60a5fa; }
+.status-select.status-review { color: var(--warning); }
+.status-select.status-done { color: var(--success); }
+
+/* SMALL SELECT */
+.status-select-sm.status-todo { color: var(--text-muted); }
+.status-select-sm.status-in_progress { color: #60a5fa; }
+.status-select-sm.status-review { color: var(--warning); }
+.status-select-sm.status-done { color: var(--success); }
+
+/* STATUS CHIP */
+.status-chip-todo { background: #6366f115; color: var(--primary); }
+.status-chip-in_progress { background: #f59e0b15; color: var(--warning); }
+.status-chip-review { background: #8b5cf615; color: #a78bfa; }
+.status-chip-done { background: #10b98115; color: var(--success); }
+
+/* ================= PRIORITY BADGE ================= */
+.priority-badge.low { color: var(--success); }
+.priority-badge.medium { color: var(--warning); }
+.priority-badge.high { color: var(--danger); }
+
+/* ================= DASHBOARD ================= */
+.my-task-row {
+  display: flex;
+  padding: 0.6rem;
+  border-left: 3px solid var(--border);
+}
+
+.my-task-row.priority-row-high { border-left-color: var(--danger); }
+.my-task-row.priority-row-medium { border-left-color: var(--warning); }
+.my-task-row.priority-row-low { border-left-color: var(--success); }
+
+/* ================= MODAL ================= */
+.modal {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ================= FORM ================= */
+.status-select-form.status-form-todo { color: var(--text-muted); }
+.status-select-form.status-form-in_progress { color: #60a5fa; }
+.status-select-form.status-form-review { color: var(--warning); }
+.status-select-form.status-form-done { color: var(--success); }
+
+/* ================= UTILS ================= */
+.text-danger { color: var(--danger); }
+
+/* ================= SCROLL ================= */
+html { scroll-behavior: smooth; }
+

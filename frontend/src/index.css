@@ -1,0 +1,625 @@
+/* ================= ROOT ================= */
+
+:root {
+  --text: #9ca3af;
+  --text-h: #f3f4f6;
+  --bg: #16171d;
+  --border: #2e303a;
+  --card: #1f2028;
+  --card-2: #181920;
+
+  --accent: #c084fc;
+  --danger: #ef4444;
+
+  --shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+}
+
+/* ================= ROOT CONTAINER ================= */
+
+#root {
+  max-width: 1100px;
+  margin: 0 auto;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+/* ================= NAVBAR ================= */
+
+.navbar {
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 24px;
+}
+
+.navbar-links a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.navbar-links a.active {
+  color: var(--accent);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ================= DASHBOARD ================= */
+
+.dashboard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* HEADER */
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-links {
+  display: flex;
+  gap: 16px;
+}
+
+.dashboard-links a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+/* ================= STATS ================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: linear-gradient(145deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  border-radius: 12px;
+  transition: 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card h3 {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.stat-card p {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+/* ================= MAIN GRID ================= */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 18px;
+}
+
+.dashboard-side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ================= CARDS ================= */
+
+.dashboard-card {
+  background: linear-gradient(145deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.dashboard-card h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+/* ================= TASK ITEMS ================= */
+
+.task-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-item:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+/* ================= OVERDUE ================= */
+
+.overdue-row {
+  background: rgba(255,0,0,0.05);
+  border: 1px solid rgba(255,0,0,0.2);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.deadline {
+  color: var(--danger);
+  font-size: 12px;
+}
+
+/* ================= DEADLINES ================= */
+
+.deadline-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.deadline-item:last-child {
+  border-bottom: none;
+}
+
+/* ================= ACTIVITY ================= */
+
+.activity-item {
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+/* ================= INPUT ================= */
+
+select {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+/* ================= KANBAN ================= */
+
+/* ================= KANBAN (UPDATED) ================= */
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  align-items: flex-start;
+}
+
+/* COLUMN */
+.kanban-col {
+  background: linear-gradient(145deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+
+  min-height: 280px; /* ✅ FIX: reduced empty space */
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* COLUMN TITLE */
+.kanban-col h3 {
+  font-size: 15px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-h);
+}
+
+.kanban-card {
+  background: var(--card);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1000px) {
+  .kanban {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .kanban {
+    grid-template-columns: 1fr;
+  }
+}
+/* ================= PROJECT PAGE ================= */
+
+.projects-page {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* HEADER */
+
+.projects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.projects-header h1 {
+  margin: 0;
+  font-size: 28px;
+  color: var(--text-h);
+}
+
+/* BUTTON */
+
+.btn-primary {
+  background: linear-gradient(135deg, #c084fc, #9333ea);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* ================= GRID ================= */
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+/* ================= CARD ================= */
+
+.project-card {
+  background: linear-gradient(145deg, #1f2028, #181920);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  transition: 0.25s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+/* TITLE */
+
+.project-card h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+/* DESCRIPTION */
+
+.project-card p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* ================= EMPTY STATE ================= */
+
+.projects-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text);
+  opacity: 0.7;
+}
+/* ================= MODAL (FINAL) ================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 16px;           /* prevents edge clipping */
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+/* MAIN MODAL CONTAINER */
+.modal {
+  width: 100%;
+  max-width: 480px;        /* responsive cap */
+  background: linear-gradient(145deg, #1f2028, #181920);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  box-sizing: border-box;
+  overflow: hidden;        /* 🔥 prevents inner overflow */
+}
+
+/* TITLE */
+.modal h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  color: var(--text-h);
+}
+
+/* ================= INPUTS ================= */
+
+.modal input,
+.modal textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #16171d;
+  color: var(--text-h);
+  font-size: 14px;
+
+  box-sizing: border-box;
+
+  outline: none;           /* 🔥 removes white focus border */
+}
+
+/* CLEAN FOCUS STATE */
+.modal input:focus,
+.modal textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.25);
+}
+
+/* TEXTAREA */
+.modal textarea {
+  min-height: 90px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+/* ================= ACTIONS ================= */
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  gap: 10px;
+}
+
+/* BUTTONS */
+
+.btn-primary {
+  background: linear-gradient(135deg, #c084fc, #9333ea);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: #d1d5db;
+  color: black;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 500px) {
+  .modal {
+    max-width: 100%;
+    padding: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+}
+/* ================= PROJECT TOOLBAR ================= */
+
+.project-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 16px 0 20px;
+  flex-wrap: wrap;
+}
+
+/* PUSH BUTTON RIGHT */
+.project-toolbar .btn-primary {
+  margin-left: auto;
+}
+/* ================= PROJECT DETAIL ================= */
+
+.project-detail {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* HEADER */
+.project-header {
+  margin-bottom: 14px;
+}
+
+.project-header h1 {
+  margin: 0;
+  font-size: 26px;
+  color: var(--text-h);
+}
+
+.project-header p {
+  margin-top: 6px;
+  color: var(--text);
+}
+
+/* TABS */
+.project-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.project-tab {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.project-tab.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* EMPTY STATE */
+.kanban-empty {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.6;
+  margin-top: 20px;
+}
+/* TOP WRAPPER */
+.project-top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* ================= TABS ================= */
+
+.project-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.project-tab {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #1f2028;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.project-tab.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* ================= TOOLBAR ================= */
+
+.project-toolbar {
+  display: flex;
+  justify-content: space-between; /* 🔥 KEY FIX */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* FILTER GROUP */
+.filters {
+  display: flex;
+  gap: 10px;
+}
+
+.filters select {
+  background: #1f2028;
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+/* BUTTON */
+.btn-primary {
+  background: linear-gradient(135deg, #c084fc, #9333ea);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+
+/* MOBILE FIX */
+@media (max-width: 600px) {
+  .project-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-primary {
+    width: 100%;
+  }
+}
