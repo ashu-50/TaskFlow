@@ -95,12 +95,6 @@ const LoginPage = () => {
             Don't have an account? <Link to="/signup">Create one</Link>
           </p>
         </div>
-
-        <div className="demo-credentials">
-          <p><strong>Demo Credentials</strong></p>
-          <p>Admin: <code>admin@example.com</code> / <code>password123</code></p>
-          <p>Member: <code>bob@example.com</code> / <code>password123</code></p>
-        </div>
       </div>
     </div>
   );
