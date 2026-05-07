@@ -7,50 +7,91 @@ import { validate } from '../middleware/validation.js';
 import { createError } from '../middleware/errorHandler.js';
 
 const router = Router();
+
 router.use(authenticate);
 
 /* ─────────────────────────────────────────────── */
-/* 🔧 FIXED ACCESS CONTROL HELPER */
+/* ACCESS CONTROL HELPER */
 /* ─────────────────────────────────────────────── */
 const getProjectOrFail = async (
   projectId,
   userId,
-  requireOwnerOrManager = false,
+  requireOwnerOrAdmin = false,
   userRole = 'member'
 ) => {
   const project = await Project.findByPk(projectId, {
     include: [
-      { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
+      {
+        model: User,
+        as: 'owner',
+        attributes: ['id', 'name', 'email'],
+      },
       {
         model: ProjectMember,
         as: 'projectMembers',
         include: [
-          { model: User, as: 'user', attributes: ['id', 'name', 'email', 'role'] },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'email', 'role'],
+          },
         ],
       },
     ],
   });
 
-  if (!project) throw createError('Project not found', 404);
+  if (!project) {
+    throw createError('Project not found', 404);
+  }
 
   const isOwner = project.ownerId === userId;
-  const membership = project.projectMembers.find((m) => m.userId === userId);
-  const isManager = membership?.projectRole === 'manager';
 
-  // ✅ ADMIN BYPASS (CRITICAL FIX)
+  const membership = project.projectMembers.find(
+    (m) => m.userId === userId
+  );
+
+  const canManageProject =
+    membership?.projectRole === 'admin' ||
+    membership?.projectRole === 'manager';
+
+  // SYSTEM ADMIN BYPASS
   if (userRole === 'admin') {
-    return { project, isOwner: true, membership };
+    return {
+      project,
+      isOwner: true,
+      membership,
+    };
   }
 
-  if (requireOwnerOrManager && !isOwner && !isManager) {
-    throw createError('Not authorized to manage this project', 403);
+  // REQUIRE ADMIN/MANAGER ACCESS
+  if (
+    requireOwnerOrAdmin &&
+    !isOwner &&
+    !canManageProject
+  ) {
+    throw createError(
+      'Not authorized to manage this project',
+      403
+    );
   }
 
-  if (!requireOwnerOrManager && !isOwner && !membership) {
-    throw createError('Not a member of this project', 403);
+  // REQUIRE MEMBERSHIP
+  if (
+    !requireOwnerOrAdmin &&
+    !isOwner &&
+    !membership
+  ) {
+    throw createError(
+      'Not a member of this project',
+      403
+    );
   }
 
-  return { project, isOwner, membership };
+  return {
+    project,
+    isOwner,
+    membership,
+  };
 };
 
 /* ─────────────────────────────────────────────── */
@@ -61,17 +102,37 @@ router.get('/', async (req, res, next) => {
     const { status, search } = req.query;
 
     const where = {};
-    if (status) where.status = status;
-    if (search) where.name = { [Op.like]: `%${search}%` }; // ✅ MySQL safe
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (search) {
+      where.name = {
+        [Op.like]: `%${search}%`,
+      };
+    }
 
     let projects;
 
+    // SYSTEM ADMIN
     if (req.user.role === 'admin') {
       projects = await Project.findAll({
         where,
         include: [
-          { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
-          { model: User, as: 'members', attributes: ['id', 'name'], through: { attributes: ['projectRole'] } },
+          {
+            model: User,
+            as: 'owner',
+            attributes: ['id', 'name', 'email'],
+          },
+          {
+            model: User,
+            as: 'members',
+            attributes: ['id', 'name'],
+            through: {
+              attributes: ['projectRole'],
+            },
+          },
         ],
         order: [['createdAt', 'DESC']],
       });
@@ -79,13 +140,21 @@ router.get('/', async (req, res, next) => {
       projects = await Project.findAll({
         where,
         include: [
-          { model: User, as: 'owner', attributes: ['id', 'name', 'email'] },
+          {
+            model: User,
+            as: 'owner',
+            attributes: ['id', 'name', 'email'],
+          },
           {
             model: User,
             as: 'members',
             attributes: ['id', 'name'],
-            through: { attributes: ['projectRole'] },
-            where: { id: req.user.id },
+            through: {
+              attributes: ['projectRole'],
+            },
+            where: {
+              id: req.user.id,
+            },
             required: false,
           },
         ],
@@ -95,11 +164,17 @@ router.get('/', async (req, res, next) => {
       projects = projects.filter(
         (p) =>
           p.ownerId === req.user.id ||
-          p.members.some((m) => m.id === req.user.id)
+          p.members.some(
+            (m) => m.id === req.user.id
+          )
       );
     }
 
-    res.json({ success: true, count: projects.length, projects });
+    res.json({
+      success: true,
+      count: projects.length,
+      projects,
+    });
 
   } catch (err) {
     next(err);
@@ -112,16 +187,39 @@ router.get('/', async (req, res, next) => {
 router.post(
   '/',
   [
-    body('name').trim().isLength({ min: 2 }),
-    body('description').optional().trim(),
-    body('dueDate').optional().isISO8601(),
-    body('status').optional().isIn(['active', 'on_hold', 'completed', 'archived']),
+    body('name')
+      .trim()
+      .isLength({ min: 2 }),
+
+    body('description')
+      .optional()
+      .trim(),
+
+    body('dueDate')
+      .optional()
+      .isISO8601(),
+
+    body('status')
+      .optional()
+      .isIn([
+        'active',
+        'on_hold',
+        'completed',
+        'archived',
+      ]),
   ],
   validate,
+
   async (req, res, next) => {
     try {
-      const { name, description, dueDate, status } = req.body;
+      const {
+        name,
+        description,
+        dueDate,
+        status,
+      } = req.body;
 
+      // CREATE PROJECT
       const project = await Project.create({
         name,
         description,
@@ -130,16 +228,20 @@ router.post(
         ownerId: req.user.id,
       });
 
-      // ✅ AUTO ADD CREATOR AS MEMBER
+      // PROJECT CREATOR BECOMES ADMIN
       await ProjectMember.create({
         projectId: project.id,
         userId: req.user.id,
-        projectRole: 'manager',
+        projectRole: 'admin',
       });
 
-      const fullProject = await Project.findByPk(project.id);
+      const fullProject =
+        await Project.findByPk(project.id);
 
-      res.status(201).json({ success: true, project: fullProject });
+      res.status(201).json({
+        success: true,
+        project: fullProject,
+      });
 
     } catch (err) {
       next(err);
@@ -150,23 +252,38 @@ router.post(
 /* ─────────────────────────────────────────────── */
 /* GET PROJECT BY ID */
 /* ─────────────────────────────────────────────── */
-router.get('/:id', param('id').isUUID(), validate, async (req, res, next) => {
-  try {
-    const { project } = await getProjectOrFail(
-      req.params.id,
-      req.user.id,
-      false,
-      req.user.role
-    );
+router.get(
+  '/:id',
+  param('id').isUUID(),
+  validate,
 
-    const tasks = await Task.findAll({ where: { projectId: project.id } });
+  async (req, res, next) => {
+    try {
+      const { project } =
+        await getProjectOrFail(
+          req.params.id,
+          req.user.id,
+          false,
+          req.user.role
+        );
 
-    res.json({ success: true, project, tasks });
+      const tasks = await Task.findAll({
+        where: {
+          projectId: project.id,
+        },
+      });
 
-  } catch (err) {
-    next(err);
+      res.json({
+        success: true,
+        project,
+        tasks,
+      });
+
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 /* ─────────────────────────────────────────────── */
 /* UPDATE PROJECT */
@@ -176,18 +293,23 @@ router.patch(
   authorize('admin'),
   param('id').isUUID(),
   validate,
+
   async (req, res, next) => {
     try {
-      const { project } = await getProjectOrFail(
-        req.params.id,
-        req.user.id,
-        true,
-        req.user.role
-      );
+      const { project } =
+        await getProjectOrFail(
+          req.params.id,
+          req.user.id,
+          true,
+          req.user.role
+        );
 
       await project.update(req.body);
 
-      res.json({ success: true, project });
+      res.json({
+        success: true,
+        project,
+      });
 
     } catch (err) {
       next(err);
@@ -198,83 +320,140 @@ router.patch(
 /* ─────────────────────────────────────────────── */
 /* DELETE PROJECT */
 /* ─────────────────────────────────────────────── */
-router.delete('/:id', authorize('admin'), async (req, res, next) => {
-  try {
-    const { project, isOwner } = await getProjectOrFail(
-      req.params.id,
-      req.user.id,
-      false,
-      req.user.role
-    );
+router.delete(
+  '/:id',
+  authorize('admin'),
 
-    if (!isOwner && req.user.role !== 'admin') {
-      return next(createError('Only owner can delete', 403));
+  async (req, res, next) => {
+    try {
+      const {
+        project,
+        isOwner,
+      } = await getProjectOrFail(
+        req.params.id,
+        req.user.id,
+        false,
+        req.user.role
+      );
+
+      if (
+        !isOwner &&
+        req.user.role !== 'admin'
+      ) {
+        return next(
+          createError(
+            'Only owner can delete',
+            403
+          )
+        );
+      }
+
+      await project.destroy();
+
+      res.json({
+        success: true,
+        message: 'Project deleted',
+      });
+
+    } catch (err) {
+      next(err);
     }
-
-    await project.destroy();
-
-    res.json({ success: true, message: 'Project deleted' });
-
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 /* ─────────────────────────────────────────────── */
 /* ADD MEMBER */
 /* ─────────────────────────────────────────────── */
-router.post('/:id/members', authorize('admin'), async (req, res, next) => {
-  try {
-    await getProjectOrFail(req.params.id, req.user.id, true, req.user.role);
+router.post(
+  '/:id/members',
+  authorize('admin'),
 
-    const member = await ProjectMember.create({
-      projectId: req.params.id,
-      userId: req.body.userId,
-      projectRole: req.body.projectRole || 'contributor',
-    });
+  async (req, res, next) => {
+    try {
+      await getProjectOrFail(
+        req.params.id,
+        req.user.id,
+        true,
+        req.user.role
+      );
 
-    res.json({ success: true, member });
+      const member =
+        await ProjectMember.create({
+          projectId: req.params.id,
+          userId: req.body.userId,
+          projectRole:
+            req.body.projectRole || 'member',
+        });
 
-  } catch (err) {
-    next(err);
+      res.json({
+        success: true,
+        member,
+      });
+
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 /* ─────────────────────────────────────────────── */
 /* REMOVE MEMBER */
 /* ─────────────────────────────────────────────── */
-router.delete('/:id/members/:userId', authorize('admin'), async (req, res, next) => {
-  try {
-    await getProjectOrFail(req.params.id, req.user.id, true, req.user.role);
+router.delete(
+  '/:id/members/:userId',
+  authorize('admin'),
 
-    await ProjectMember.destroy({
-      where: { projectId: req.params.id, userId: req.params.userId },
-    });
+  async (req, res, next) => {
+    try {
+      await getProjectOrFail(
+        req.params.id,
+        req.user.id,
+        true,
+        req.user.role
+      );
 
-    res.json({ success: true });
+      await ProjectMember.destroy({
+        where: {
+          projectId: req.params.id,
+          userId: req.params.userId,
+        },
+      });
 
-  } catch (err) {
-    next(err);
+      res.json({
+        success: true,
+      });
+
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 /* ─────────────────────────────────────────────── */
 /* GET MEMBERS */
 /* ─────────────────────────────────────────────── */
-router.get('/:id/members', async (req, res, next) => {
-  try {
-    const { project } = await getProjectOrFail(
-      req.params.id,
-      req.user.id,
-      false,
-      req.user.role
-    );
+router.get(
+  '/:id/members',
 
-    res.json({ success: true, members: project.projectMembers });
+  async (req, res, next) => {
+    try {
+      const { project } =
+        await getProjectOrFail(
+          req.params.id,
+          req.user.id,
+          false,
+          req.user.role
+        );
 
-  } catch (err) {
-    next(err);
+      res.json({
+        success: true,
+        members: project.projectMembers,
+      });
+
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 export default router;
