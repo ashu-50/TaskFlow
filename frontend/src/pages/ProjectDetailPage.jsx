@@ -21,33 +21,51 @@ const PRIORITY_OPTIONS = [
 
 const ProjectDetailPage = () => {
   const { id } = useParams();
+
   const navigate = useNavigate();
+
   const { user, isAdmin } = useAuth();
 
   const [project, setProject] = useState(null);
+
   const [tasks, setTasks] = useState([]);
+
   const [members, setMembers] = useState([]);
+
   const [allUsers, setAllUsers] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState('tasks');
-  const [taskFilters, setTaskFilters] = useState({ status: '', priority: '' });
 
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [taskFilters, setTaskFilters] = useState({
+    status: '',
+    priority: '',
+  });
 
-  /* ── FETCH ── */
+  const [showTaskModal, setShowTaskModal] =
+    useState(false);
+
+  const [showMemberModal, setShowMemberModal] =
+    useState(false);
+
+  /* ───────────────────────────────────────────── */
+  /* FETCH PROJECT + TASKS */
+  /* ───────────────────────────────────────────── */
   const fetchAll = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
 
     try {
-      const [projRes, taskRes] = await Promise.all([
-        projectsAPI.getById(id),
-        tasksAPI.getAll({ projectId: id, ...taskFilters }),
-      ]);
+      const [projRes, taskRes] =
+        await Promise.all([
+          projectsAPI.getById(id),
+          tasksAPI.getAll({
+            projectId: id,
+            ...taskFilters,
+          }),
+        ]);
 
       const projectData =
         projRes?.project ||
@@ -67,10 +85,13 @@ const ProjectDetailPage = () => {
       }
 
       setProject(projectData);
+
       setTasks(taskData);
+
       setMembers(projectData.projectMembers || []);
 
-    } catch {
+    } catch (err) {
+      console.error(err);
       navigate('/projects');
     } finally {
       setLoading(false);
@@ -81,68 +102,179 @@ const ProjectDetailPage = () => {
     fetchAll();
   }, [fetchAll]);
 
-  /* ── FETCH USERS ── */
+  /* ───────────────────────────────────────────── */
+  /* FETCH USERS FOR ADD MEMBER */
+  /* ───────────────────────────────────────────── */
   useEffect(() => {
-    if (isAdmin && showMemberModal) {
-      dashboardAPI.getUsers()
+    if (showMemberModal) {
+      dashboardAPI
+        .getUsers()
         .then((res) => {
           const users =
             res?.users ||
             res?.data?.users ||
             res?.data ||
             [];
+
           setAllUsers(users);
         })
         .catch(() => {});
     }
-  }, [showMemberModal, isAdmin]);
+  }, [showMemberModal]);
 
-  /* ── TASK HANDLERS ── */
-  const handleStatusChange = async (taskId, status) => {
-    await tasksAPI.update(taskId, { status });
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status } : t))
-    );
+  /* ───────────────────────────────────────────── */
+  /* TASK HANDLERS */
+  /* ───────────────────────────────────────────── */
+  const handleStatusChange = async (
+    taskId,
+    status
+  ) => {
+    try {
+      await tasksAPI.update(taskId, {
+        status,
+      });
+
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId
+            ? { ...t, status }
+            : t
+        )
+      );
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm('Delete this task?')) return;
-    await tasksAPI.delete(taskId);
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    if (
+      !window.confirm(
+        'Delete this task?'
+      )
+    )
+      return;
+
+    try {
+      await tasksAPI.delete(taskId);
+
+      setTasks((prev) =>
+        prev.filter((t) => t.id !== taskId)
+      );
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleCreateTask = async (formData) => {
-    const res = await tasksAPI.create({ ...formData, projectId: id });
-    const newTask = res?.task || res?.data?.task || res?.data || res;
-    setTasks((prev) => [newTask, ...prev]);
-    setShowTaskModal(false);
+  const handleCreateTask = async (
+    formData
+  ) => {
+    try {
+      const res =
+        await tasksAPI.create({
+          ...formData,
+          projectId: id,
+        });
+
+      const newTask =
+        res?.task ||
+        res?.data?.task ||
+        res?.data ||
+        res;
+
+      setTasks((prev) => [
+        newTask,
+        ...prev,
+      ]);
+
+      setShowTaskModal(false);
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  /* ── MEMBER HANDLERS ── */
-  const handleAddMember = async (userId) => {
-    await projectsAPI.addMember(id, { userId, projectRole: 'contributor' });
-    fetchAll();
-    setShowMemberModal(false);
+  /* ───────────────────────────────────────────── */
+  /* MEMBER HANDLERS */
+  /* ───────────────────────────────────────────── */
+  const handleAddMember = async (
+    userId
+  ) => {
+    try {
+      await projectsAPI.addMember(id, {
+        userId,
+        projectRole: 'member',
+      });
+
+      await fetchAll();
+
+      setShowMemberModal(false);
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleRemoveMember = async (userId) => {
-    if (!window.confirm('Remove member?')) return;
-    await projectsAPI.removeMember(id, userId);
-    setMembers((prev) => prev.filter((m) => m.userId !== userId));
+  const handleRemoveMember = async (
+    userId
+  ) => {
+    if (
+      !window.confirm(
+        'Remove this member?'
+      )
+    )
+      return;
+
+    try {
+      await projectsAPI.removeMember(
+        id,
+        userId
+      );
+
+      setMembers((prev) =>
+        prev.filter(
+          (m) => m.userId !== userId
+        )
+      );
+
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  /* ── STATES ── */
-  if (loading) return <div className="spinner" />;
-  if (!project) return <p>Project not found</p>;
+  /* ───────────────────────────────────────────── */
+  /* LOADING / EMPTY */
+  /* ───────────────────────────────────────────── */
+  if (loading) {
+    return (
+      <div className="spinner" />
+    );
+  }
 
-  const memberIds = members.map((m) => m.userId);
-  const nonMembers = allUsers.filter((u) => !memberIds.includes(u.id));
+  if (!project) {
+    return <p>Project not found</p>;
+  }
 
-  const isOwnerOrManager =
+  /* ───────────────────────────────────────────── */
+  /* MEMBER HELPERS */
+  /* ───────────────────────────────────────────── */
+  const memberIds = members.map(
+    (m) => m.userId
+  );
+
+  const nonMembers = allUsers.filter(
+    (u) => !memberIds.includes(u.id)
+  );
+
+  // PROJECT ADMIN CHECK
+  const isProjectAdmin =
     project.ownerId === user?.id ||
     isAdmin ||
     members.some(
-      (m) => m.userId === user?.id && m.projectRole === 'manager'
+      (m) =>
+        m.userId === user?.id &&
+        m.projectRole === 'admin'
     );
 
   return (
@@ -151,27 +283,46 @@ const ProjectDetailPage = () => {
       {/* HEADER */}
       <div className="project-header">
         <h1>{project.name}</h1>
-        {project.description && <p>{project.description}</p>}
+
+        {project.description && (
+          <p>
+            {project.description}
+          </p>
+        )}
       </div>
 
-      {/* TOP SECTION */}
+      {/* TOP */}
       <div className="project-top">
 
         {/* TABS */}
         <div className="project-tabs">
+
           <button
-            className={`project-tab ${activeTab === 'tasks' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tasks')}
+            className={`project-tab ${
+              activeTab === 'tasks'
+                ? 'active'
+                : ''
+            }`}
+            onClick={() =>
+              setActiveTab('tasks')
+            }
           >
             Tasks ({tasks.length})
           </button>
 
           <button
-            className={`project-tab ${activeTab === 'members' ? 'active' : ''}`}
-            onClick={() => setActiveTab('members')}
+            className={`project-tab ${
+              activeTab === 'members'
+                ? 'active'
+                : ''
+            }`}
+            onClick={() =>
+              setActiveTab('members')
+            }
           >
             Members ({members.length})
           </button>
+
         </div>
 
         {/* TOOLBAR */}
@@ -179,131 +330,258 @@ const ProjectDetailPage = () => {
           <div className="project-toolbar">
 
             <div className="filters">
+
               <select
-                value={taskFilters.status}
+                value={
+                  taskFilters.status
+                }
                 onChange={(e) =>
-                  setTaskFilters({ ...taskFilters, status: e.target.value })
+                  setTaskFilters({
+                    ...taskFilters,
+                    status:
+                      e.target.value,
+                  })
                 }
               >
-                <option value="">All</option>
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
+                <option value="">
+                  All Status
+                </option>
+
+                {STATUS_OPTIONS.map(
+                  (s) => (
+                    <option
+                      key={s.value}
+                      value={s.value}
+                    >
+                      {s.label}
+                    </option>
+                  )
+                )}
               </select>
 
               <select
-                value={taskFilters.priority}
+                value={
+                  taskFilters.priority
+                }
                 onChange={(e) =>
-                  setTaskFilters({ ...taskFilters, priority: e.target.value })
+                  setTaskFilters({
+                    ...taskFilters,
+                    priority:
+                      e.target.value,
+                  })
                 }
               >
-                <option value="">All</option>
-                {PRIORITY_OPTIONS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
-                ))}
+                <option value="">
+                  All Priority
+                </option>
+
+                {PRIORITY_OPTIONS.map(
+                  (p) => (
+                    <option
+                      key={p.value}
+                      value={p.value}
+                    >
+                      {p.label}
+                    </option>
+                  )
+                )}
               </select>
+
             </div>
 
-            {isOwnerOrManager && (
+            {isProjectAdmin && (
               <button
                 className="btn-primary"
-                onClick={() => setShowTaskModal(true)}
+                onClick={() =>
+                  setShowTaskModal(
+                    true
+                  )
+                }
               >
-                + Task
+                + Create Task
               </button>
             )}
+
           </div>
         )}
+
       </div>
 
       {/* TASKS */}
       {activeTab === 'tasks' && (
         <div className="kanban">
+
           {STATUS_OPTIONS.map((col) => {
-            const columnTasks = tasks.filter(
-              (t) => (t.status || 'todo') === col.value
-            );
+            const columnTasks =
+              tasks.filter(
+                (t) =>
+                  (t.status ||
+                    'todo') ===
+                  col.value
+              );
 
             return (
-              <div key={col.value} className="kanban-col">
+              <div
+                key={col.value}
+                className="kanban-col"
+              >
                 <h3>{col.label}</h3>
 
-                {columnTasks.length === 0 ? (
-                  <div className="kanban-empty">No tasks</div>
+                {columnTasks.length ===
+                0 ? (
+                  <div className="kanban-empty">
+                    No tasks
+                  </div>
                 ) : (
-                  columnTasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onStatusChange={handleStatusChange}
-                      onDelete={handleDeleteTask}
-                      canManage={isOwnerOrManager}
-                    />
-                  ))
+                  columnTasks.map(
+                    (task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onStatusChange={
+                          handleStatusChange
+                        }
+                        onDelete={
+                          handleDeleteTask
+                        }
+                        canManage={
+                          isProjectAdmin
+                        }
+                      />
+                    )
+                  )
                 )}
+
               </div>
             );
           })}
+
         </div>
       )}
 
       {/* MEMBERS */}
       {activeTab === 'members' && (
         <div className="members-section">
-          {members.map((m) => (
-            <div key={m.id} className="member-item">
-              {m.user?.name} ({m.projectRole})
 
-              {isAdmin && m.userId !== project.ownerId && (
-                <button
-                  className="btn-danger"
-                  onClick={() => handleRemoveMember(m.userId)}
-                >
-                  Remove
-                </button>
-              )}
+          {members.map((m) => (
+            <div
+              key={m.id}
+              className="member-item"
+            >
+              <div>
+                <strong>
+                  {m.user?.name}
+                </strong>
+
+                <span>
+                  {' '}
+                  ({m.projectRole})
+                </span>
+              </div>
+
+              {isProjectAdmin &&
+                m.userId !==
+                  project.ownerId && (
+                  <button
+                    className="btn-danger"
+                    onClick={() =>
+                      handleRemoveMember(
+                        m.userId
+                      )
+                    }
+                  >
+                    Remove
+                  </button>
+                )}
+
             </div>
           ))}
 
-          {isAdmin && (
+          {isProjectAdmin && (
             <button
               className="btn-primary"
-              onClick={() => setShowMemberModal(true)}
+              onClick={() =>
+                setShowMemberModal(
+                  true
+                )
+              }
             >
               + Add Member
             </button>
           )}
+
         </div>
       )}
 
-      {/* MODALS */}
+      {/* TASK MODAL */}
       {showTaskModal && (
         <TaskForm
           mode="create"
           members={members}
-          onSubmit={handleCreateTask}
-          onClose={() => setShowTaskModal(false)}
+          onSubmit={
+            handleCreateTask
+          }
+          onClose={() =>
+            setShowTaskModal(
+              false
+            )
+          }
         />
       )}
 
+      {/* MEMBER MODAL */}
       {showMemberModal && (
         <div className="modal-overlay">
+
           <div className="modal">
+
             <h3>Add Members</h3>
 
-            {nonMembers.map((u) => (
-              <div key={u.id} className="member-item">
-                {u.name}
-                <button onClick={() => handleAddMember(u.id)}>Add</button>
-              </div>
-            ))}
+            {nonMembers.length ===
+            0 ? (
+              <p>
+                No available users
+              </p>
+            ) : (
+              nonMembers.map((u) => (
+                <div
+                  key={u.id}
+                  className="member-item"
+                >
+                  <span>
+                    {u.name}
+                  </span>
 
-            <button onClick={() => setShowMemberModal(false)}>
+                  <button
+                    className="btn-primary"
+                    onClick={() =>
+                      handleAddMember(
+                        u.id
+                      )
+                    }
+                  >
+                    Add
+                  </button>
+
+                </div>
+              ))
+            )}
+
+            <button
+              className="btn-secondary"
+              onClick={() =>
+                setShowMemberModal(
+                  false
+                )
+              }
+            >
               Close
             </button>
+
           </div>
         </div>
       )}
+
     </div>
   );
 };
