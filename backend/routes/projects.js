@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import { Op } from 'sequelize';
 import { Project, ProjectMember, User, Task } from '../models/index.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validation.js';
 import { createError } from '../middleware/errorHandler.js';
 
@@ -16,7 +16,7 @@ router.use(authenticate);
 const getProjectOrFail = async (
   projectId,
   userId,
-  requireOwnerOrAdmin = false,
+  requireAdminAccess = false,
   userRole = 'member'
 ) => {
   const project = await Project.findByPk(projectId, {
@@ -50,9 +50,8 @@ const getProjectOrFail = async (
     (m) => m.userId === userId
   );
 
-  const canManageProject =
-    membership?.projectRole === 'admin' ||
-    membership?.projectRole === 'manager';
+  const isProjectAdmin =
+    membership?.projectRole === 'admin';
 
   // SYSTEM ADMIN BYPASS
   if (userRole === 'admin') {
@@ -63,11 +62,11 @@ const getProjectOrFail = async (
     };
   }
 
-  // REQUIRE ADMIN/MANAGER ACCESS
+  // REQUIRE PROJECT ADMIN ACCESS
   if (
-    requireOwnerOrAdmin &&
+    requireAdminAccess &&
     !isOwner &&
-    !canManageProject
+    !isProjectAdmin
   ) {
     throw createError(
       'Not authorized to manage this project',
@@ -77,7 +76,7 @@ const getProjectOrFail = async (
 
   // REQUIRE MEMBERSHIP
   if (
-    !requireOwnerOrAdmin &&
+    !requireAdminAccess &&
     !isOwner &&
     !membership
   ) {
@@ -208,6 +207,7 @@ router.post(
         'archived',
       ]),
   ],
+
   validate,
 
   async (req, res, next) => {
@@ -228,7 +228,7 @@ router.post(
         ownerId: req.user.id,
       });
 
-      // PROJECT CREATOR BECOMES ADMIN
+      // CREATOR BECOMES PROJECT ADMIN
       await ProjectMember.create({
         projectId: project.id,
         userId: req.user.id,
@@ -290,8 +290,9 @@ router.get(
 /* ─────────────────────────────────────────────── */
 router.patch(
   '/:id',
-  authorize('admin'),
+
   param('id').isUUID(),
+
   validate,
 
   async (req, res, next) => {
@@ -322,7 +323,6 @@ router.patch(
 /* ─────────────────────────────────────────────── */
 router.delete(
   '/:id',
-  authorize('admin'),
 
   async (req, res, next) => {
     try {
@@ -332,17 +332,14 @@ router.delete(
       } = await getProjectOrFail(
         req.params.id,
         req.user.id,
-        false,
+        true,
         req.user.role
       );
 
-      if (
-        !isOwner &&
-        req.user.role !== 'admin'
-      ) {
+      if (!isOwner && req.user.role !== 'admin') {
         return next(
           createError(
-            'Only owner can delete',
+            'Only project owner can delete project',
             403
           )
         );
@@ -366,7 +363,6 @@ router.delete(
 /* ─────────────────────────────────────────────── */
 router.post(
   '/:id/members',
-  authorize('admin'),
 
   async (req, res, next) => {
     try {
@@ -376,6 +372,21 @@ router.post(
         true,
         req.user.role
       );
+
+      const existing =
+        await ProjectMember.findOne({
+          where: {
+            projectId: req.params.id,
+            userId: req.body.userId,
+          },
+        });
+
+      if (existing) {
+        throw createError(
+          'User already added to project',
+          400
+        );
+      }
 
       const member =
         await ProjectMember.create({
@@ -401,7 +412,6 @@ router.post(
 /* ─────────────────────────────────────────────── */
 router.delete(
   '/:id/members/:userId',
-  authorize('admin'),
 
   async (req, res, next) => {
     try {
