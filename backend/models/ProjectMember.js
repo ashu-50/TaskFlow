@@ -13,18 +13,28 @@ const ProjectMember = sequelize.define(
     projectId: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: { model: 'projects', key: 'id' },
+      references: {
+        model: 'projects',
+        key: 'id',
+      },
     },
 
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: { model: 'users', key: 'id' },
+      references: {
+        model: 'users',
+        key: 'id',
+      },
     },
 
+    // UPDATED ROLE SYSTEM
     projectRole: {
-      type: DataTypes.ENUM('manager', 'contributor', 'viewer'),
-      defaultValue: 'contributor',
+      type: DataTypes.ENUM(
+        'admin',
+        'member'
+      ),
+      defaultValue: 'member',
       allowNull: false,
     },
 
@@ -35,7 +45,9 @@ const ProjectMember = sequelize.define(
   },
   {
     tableName: 'project_members',
+
     timestamps: true,
+
     indexes: [
       {
         unique: true,
